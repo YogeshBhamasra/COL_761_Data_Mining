@@ -1,0 +1,71 @@
+nohup: ignoring input
+../bin/apriori/src/apriori - find frequent item sets with the apriori algorithm
+version 6.31 (2022.11.22)        (c) 1996-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [37.14s].
+filtering, sorting and recoding items ... [683 item(s)] done [1.77s].
+sorting and reducing transactions ... [1394053/1692082 transaction(s)] done [6.09s].
+building transaction tree ... [2590180 node(s)] done [0.71s].
+checking subsets of size 1 2 3 4 5 6../bin/fpgrowth/src/fpgrowth - find frequent item sets with the fpgrowth algorithm
+version 6.21 (2022.11.22)        (c) 2004-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [36.79s].
+filtering, sorting and recoding items ... [683 item(s)] done [1.83s].
+sorting and reducing transactions ... [1394053/1692082 transaction(s)] done [6.70s].
+writing ./final_result/fp5 ... ../bin/apriori/src/apriori - find frequent item sets with the apriori algorithm
+version 6.31 (2022.11.22)        (c) 1996-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [34.91s].
+filtering, sorting and recoding items ... [262 item(s)] done [1.76s].
+sorting and reducing transactions ... [1319600/1692082 transaction(s)] done [3.75s].
+building transaction tree ... [2317962 node(s)] done [0.67s].
+checking subsets of size 1 2 3 4 5 6 7 8 9 10 11 done [595.55s].
+writing ./final_result/ap10 ... [217767 set(s)] done [0.05s].
+../bin/fpgrowth/src/fpgrowth - find frequent item sets with the fpgrowth algorithm
+version 6.21 (2022.11.22)        (c) 2004-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [36.44s].
+filtering, sorting and recoding items ... [262 item(s)] done [1.82s].
+sorting and reducing transactions ... [1319600/1692082 transaction(s)] done [4.26s].
+writing ./final_result/fp10 ... [217767 set(s)] done [83.43s].
+../bin/apriori/src/apriori - find frequent item sets with the apriori algorithm
+version 6.31 (2022.11.22)        (c) 1996-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [33.76s].
+filtering, sorting and recoding items ... [29 item(s)] done [1.45s].
+sorting and reducing transactions ... [742260/1692082 transaction(s)] done [1.45s].
+building transaction tree ... [1303240 node(s)] done [0.47s].
+checking subsets of size 1 2 3 4 5 6 done [2.94s].
+writing ./final_result/ap25 ... [413 set(s)] done [0.00s].
+../bin/fpgrowth/src/fpgrowth - find frequent item sets with the fpgrowth algorithm
+version 6.21 (2022.11.22)        (c) 2004-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [33.20s].
+filtering, sorting and recoding items ... [29 item(s)] done [1.44s].
+sorting and reducing transactions ... [742260/1692082 transaction(s)] done [1.72s].
+writing ./final_result/fp25 ... [413 set(s)] done [0.72s].
+../bin/apriori/src/apriori - find frequent item sets with the apriori algorithm
+version 6.31 (2022.11.22)        (c) 1996-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [33.42s].
+filtering, sorting and recoding items ... [5 item(s)] done [1.26s].
+sorting and reducing transactions ... [32/1692082 transaction(s)] done [0.89s].
+building transaction tree ... [32 node(s)] done [0.00s].
+checking subsets of size 1 2 3 done [0.00s].
+writing ./final_result/ap50 ... [10 set(s)] done [0.00s].
+../bin/fpgrowth/src/fpgrowth - find frequent item sets with the fpgrowth algorithm
+version 6.21 (2022.11.22)        (c) 2004-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [33.88s].
+filtering, sorting and recoding items ... [5 item(s)] done [1.36s].
+sorting and reducing transactions ... [32/1692082 transaction(s)] done [1.00s].
+writing ./final_result/fp50 ... [10 set(s)] done [0.00s].
+../bin/apriori/src/apriori - find frequent item sets with the apriori algorithm
+version 6.31 (2022.11.22)        (c) 1996-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [34.90s].
+filtering, sorting and recoding items ... 
+../bin/apriori/src/apriori: no (frequent) items found
+../bin/fpgrowth/src/fpgrowth - find frequent item sets with the fpgrowth algorithm
+version 6.21 (2022.11.22)        (c) 2004-2022   Christian Borgelt
+reading webdocs.dat ... [5267656 item(s), 1692082 transaction(s)] done [35.19s].
+filtering, sorting and recoding items ... 
+../bin/fpgrowth/src/fpgrowth: no (frequent) items found
+True
+Error running ../bin/apriori/src/apriori with support 5: Command '['../bin/apriori/src/apriori', '-s5', 'webdocs.dat', './final_result/ap5']' timed out after 3599.999982359819 seconds
+Support: 5 | Apriori Time: 3600.0824s | FP-Growth Time: 151.3528s
+Support: 10 | Apriori Time: 640.0443s | FP-Growth Time: 126.1241s
+Support: 25 | Apriori Time: 40.2078s | FP-Growth Time: 37.2046s
+Support: 50 | Apriori Time: 35.7105s | FP-Growth Time: 36.3694s
+Support: 90 | Apriori Time: 36.4513s | FP-Growth Time: 36.7237s
