@@ -77,7 +77,7 @@ def identify_discriminative_subgraphs(input_file, output_file):
     unique_graph_path = input_file + ".unique"
     gaston_format(unique_graphs, unique_graph_path)
     gaston_output_path = unique_graph_path + ".gaston"
-    run_gaston(unique_graph_path, gaston_output_path, len(unique_graphs), support_threshold=55)
+    run_gaston(unique_graph_path, gaston_output_path, len(unique_graphs), support_threshold=70)
     extract_topk(gaston_output_path, 50, output_file)
 
 if __name__ == "__main__":
