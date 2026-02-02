@@ -154,8 +154,8 @@ if __name__ == "__main__":
     gsp_times = []
     fsg_times = []
     gaston_times = []
-    # support_thresholds = [95, 50, 25, 10, 5]
-    support_thresholds = [95, 90]
+    support_thresholds = [95, 50, 25, 10, 5]
+    # support_thresholds = [95, 90]
         
     shutil.rmtree(args.out, ignore_errors=True)
     os.makedirs(args.out, exist_ok=True)
