@@ -1,23 +1,25 @@
 #!/bin/bash
-set -e  # exit immediately on error
 
-echo "[INFO] Setting up environment for Graph Indexing (Q3)"
+echo "=========================================="
+echo "Environment Setup for Q3"
+echo "=========================================="
 
-# Create virtual environment (local, safe)
-if [ ! -d "venv" ]; then
-    echo "[INFO] Creating virtual environment"
-    python3 -m venv venv
-fi
+# Install required packages
+echo "Installing required Python packages..."
+pip3 install --user numpy matplotlib networkx 
 
-# Activate venv
-source venv/bin/activate
+# echo ""
+# echo "=========================================="
+# echo "Checking for Gaston executable..."
+# echo "=========================================="
 
-# Upgrade pip
-echo "[INFO] Upgrading pip"
-pip install --upgrade pip
+# # Check if Gaston is available
+# if [ -f "gaston" ]; then
+#     echo "✓ Gaston found"
+# else
+#     echo "✗ Gaston not found!"
+#     echo "Please compile Gaston and place it in this directory"
+# fi
 
-# Install required Python libraries
-echo "[INFO] Installing Python dependencies"
-pip install numpy vf3py
-
-echo "[INFO] Environment setup complete"
+# echo ""
+echo "Setup complete!"
