@@ -9,7 +9,7 @@ def generate_candidates(database_features, query_features):
 
         for j, db_feature in enumerate(database_features):
             if np.all(query_feature <= db_feature):
-                query_candidate.append(j+1)
+                query_candidate.append(j)
 
         candidates.append(query_candidate)
 
@@ -18,7 +18,7 @@ def generate_candidates(database_features, query_features):
 def candidates_output_file(candidates, output_file):
     with open(output_file, 'w') as f:
         for q_idx, candidate_list in enumerate(candidates):
-            f.write(f"q # {q_idx + 1}\n")
+            f.write(f"q # {q_idx}\n")
             
             if candidate_list:
                 candidate_str = ' '.join(map(str, candidate_list))
