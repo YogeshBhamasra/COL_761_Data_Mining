@@ -1,13 +1,11 @@
-import re
+from tkinter.constants import TOP
 from cluster import cluster
 import argparse as ap
 import networkx as nx
 import random
-import matplotlib.pyplot as plt
-from joblib import Parallel, delayed
-from tqdm_joblib import tqdm_joblib
 from tqdm import tqdm
 import time
+from matplotlib import pyplot as plt
 
 
 
@@ -37,11 +35,33 @@ def get_edges(file_path):
     return edges, probs
 
 
-def make_graph(edges):
+def make_graph(edges, seeds, hops=-1):
     G = nx.DiGraph()
     for u, v, p in edges:
         G.add_edge(u, v, weight=p)
-    # G.add_weighted_edges_from(edges)
+    
+    if hops == -1:
+        return G
+        
+    G_hops = nx.DiGraph()
+    # addd edges within hops of seeds
+    # for seed in seeds:
+    #     for node in nx.single_source_shortest_path_length(G, seed, cutoff=hops).keys():
+    #         G_hops.add_node(node)
+    # for u, v, p in edges:
+    #     if G_hops.has_node(u) and G_hops.has_node(v):
+    #         G_hops.add_edge(u, v, weight=p)
+    # return G_hops
+    # 
+    
+    burnable_edges = set()
+    for seed in seeds:
+        burnable_edges.update(get_burnable_edges(G, seed, hops))
+        
+    for u, v, p in edges:
+        if (u, v) in burnable_edges or (v, u) in burnable_edges:
+            G_hops.add_edge(u, v, weight=p)
+    G = G_hops
     
     # pos = nx.spring_layout(G, seed=7)
     
@@ -49,10 +69,10 @@ def make_graph(edges):
     #                  node_color='lightblue',
     #                  edge_color='gray')
     
-    # extract weights
+    # # extract weights
     # edge_labels = nx.get_edge_attributes(G, 'weight')
     
-    # print(edge_labels)
+    # # print(edge_labels)
     
     # nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, label_pos = 0.3)
     
@@ -127,25 +147,48 @@ def personalized_pagerank(graph, seeds, alpha=0.85, max_iter=100):
 def get_scores(pagerank, bridge_edges, probs):
     scores = {}
     for u, v in bridge_edges:
-        score = pagerank[u] * probs[u].get(v, 0)
+        score = pagerank[u] * probs[u].get(v, 0) / pagerank[v]
+        # score = pagerank[u] * probs[u].get(v, 0) - pagerank[v]
+        # score = pagerank[u] * probs[u].get(v, 0)
         scores[(u, v)] = score
     return scores
 
 
 def get_edges_to_remove(scores, k):
+    print(f"Getting {k} edges to remove based on scores...")
     sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    return sorted_scores[:k]
+    top_k_scores = sorted_scores[:k]
+    
+    top_k_edges = [edge for edge, score in top_k_scores]
+    print(f"Selected edges to remove: {top_k_edges}")
+    return top_k_edges
 
 
 def remove_edges(graph, edges_to_remove):
+    print(f"Removing {len(edges_to_remove)} edges...")
     for u, v in edges_to_remove:
+        # print(f"Removing edge: ({u}, {v})")
         if graph.has_edge(u, v):
             graph.remove_edge(u, v)
+            # print(f"Removed edge: ({u}, {v})")
 
+def get_burnable_edges(graph, node, hops):
+    burnable_edges = set()
+    for neighbor in graph.neighbors(node):
+        burnable_edges.add((node, neighbor))
+        if hops > 1:
+            burnable_edges.update(get_burnable_edges(graph, neighbor, hops - 1))
+    return burnable_edges
 
 def simulate_burning(graph, seeds, probs):
     burning = set(seeds)
     burnt = set()
+    # burnable_edges = set()
+    
+    # if hops != -1:
+    #     for seed in seeds:
+    #         burnable_edges.update(get_burnable_edges(graph, seed, hops))
+    
     while True:
         new_burning = set()
         for node in burning:
@@ -187,20 +230,35 @@ if __name__ == "__main__":
         required=True,
         help="Number of simulations to run for averaging results",
     )
+    
+    argparse.add_argument(
+        "--hops",
+        type=int,
+        required=True,
+        help="Number of hops to consider for the graph (default: -1 for full graph)",
+    )
+    
+    argparse.add_argument(
+        "--output_path",
+        type=str,
+        required=True,
+        help="Path to save the blocked edges"
+    )
     args = argparse.parse_args()
     edges, probs = get_edges(args.dataset_path)
-    G = make_graph(edges)
+    seeds = get_seeds(args.seed_path)
+    G = make_graph(edges, seeds, hops=args.hops)
 
-    values = []
-    for i in range(args.num_sims):
-        print(f"Simulation {i + 1}/{args.num_sims}")
-        burnt_original = simulate_burning(G, get_seeds(args.seed_path), probs)
-        print(f"Number of burnt nodes before edge removal: {len(burnt_original)}")
-        values.append(len(burnt_original))
+    # values = []
+    # for i in range(args.num_sims):
+    #     print(f"Simulation {i + 1}/{args.num_sims}")
+    #     burnt_original = simulate_burning(G, seeds, probs)
+    #     print(f"Number of burnt nodes before edge removal: {len(burnt_original)}")
+    #     values.append(len(burnt_original))
 
-    print(
-        f"Average number of burnt nodes before edge removal: {sum(values) / len(values)}"
-    )
+    # print(
+    #     f"Average number of burnt nodes before edge removal: {sum(values) / len(values)}"
+    # )
     
     start_time = time.time()
     clusters = cluster(G)
@@ -216,17 +274,23 @@ if __name__ == "__main__":
     ppr = personalized_pagerank(G, seeds)
     print("Personalized PageRank calculated.")
     scores = get_scores(ppr, bridge_edges, probs)
-
+    
+    print(f"Number of Edges before removal: {G.number_of_edges()}")
     edges_to_remove = get_edges_to_remove(scores, args.k)
 
     remove_edges(G, edges_to_remove)
+    print(f"Number of Edges after removal: {G.number_of_edges()}")
+    
+    with open(args.output_path, "w") as f:
+        for u, v in edges_to_remove:
+            f.write(f"{u} {v}\n")
 
-    values = []
-    for i in range(args.num_sims):
-        print(f"Simulation {i + 1}/{args.num_sims} after edge removal")
-        burnt_after_removal = simulate_burning(G, seeds, probs)
-        print(f"Number of burnt nodes after edge removal: {len(burnt_after_removal)}")
-        values.append(len(burnt_after_removal))
-    print(
-        f"Average number of burnt nodes after edge removal: {sum(values) / len(values)}"
-    )
+    # values = []
+    # for i in range(args.num_sims):
+    #     print(f"Simulation {i + 1}/{args.num_sims} after edge removal")
+    #     burnt_after_removal = simulate_burning(G, seeds, probs)
+    #     print(f"Number of burnt nodes after edge removal: {len(burnt_after_removal)}")
+    #     values.append(len(burnt_after_removal))
+    # print(
+    #     f"Average number of burnt nodes after edge removal: {sum(values) / len(values)}"
+    # )

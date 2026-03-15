@@ -12,7 +12,7 @@ def cluster(G):
     
     print("Running Markov Clustering...")
     # Perform Markov Clustering
-    result = mc.run_mcl(adjacency_matrix, inflation=1.2, verbose=True)
+    result = mc.run_mcl(adjacency_matrix, inflation=2, verbose=True)
     
     # Get the clusters
     clusters = mc.get_clusters(result)
