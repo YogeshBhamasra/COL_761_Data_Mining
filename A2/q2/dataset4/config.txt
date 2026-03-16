@@ -1,3 +1,0 @@
-k 30
-num_sim 50
-hops 3
