@@ -67,10 +67,22 @@ if __name__ == "__main__":
     # print(f"Burnt nodes after clever removal: {burnt_after_removal_clever}")
     if burnt_after_removal_clustered < burnt_after_removal_clever:
         edges_to_remove = edges_to_remove_cluster
+        G_final = G_clustered
     elif burnt_after_removal_clustered > burnt_after_removal_clever:
         edges_to_remove = edges_to_remove_clever
+        G_final = G_clever
     else:
         edges_to_remove = edges_to_remove_cluster
+        G_final = G_clustered
+    
+    if len(edges_to_remove) < args.k:
+        edges = sorted(G_final.edges())
+        
+        for u, v in sorted(edges, key=lambda x: G_final[x[0]][x[1]]['weight'], reverse=True):
+            if (u, v) not in edges_to_remove:
+                edges_to_remove.append((u, v))
+                if len(edges_to_remove) == args.k:
+                    break
         
     with open(args.output_path, "w") as f:
         for u, v in edges_to_remove:
