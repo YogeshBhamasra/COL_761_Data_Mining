@@ -32,9 +32,12 @@ def load_model(model_path: str) -> torch.nn.Module:
     print(f"Loading model from {os.path.splitext(os.path.basename(model_path))[0]} ...")
     basename = os.path.splitext(os.path.basename(model_path))[0]
     if basename.endswith("_A"):
-        from train_A import ResidualSAGE, ModelWrapper
-        sys.modules["__main__"].ResidualSAGE = ResidualSAGE
+        from train_A import ModelWrapper, GCNII, APPNP, GATv2Conv, SGConv
         sys.modules["__main__"].ModelWrapper = ModelWrapper 
+        sys.modules["__main__"].GCNII = GCNII
+        sys.modules["__main__"].APPNP = APPNP
+        sys.modules["__main__"].GATv2Conv = GATv2Conv
+        sys.modules["__main__"].SGConv = SGConv
     model = torch.load(model_path, weights_only=False, map_location="cpu")
     model.eval()
     return model
