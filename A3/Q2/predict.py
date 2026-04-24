@@ -35,9 +35,6 @@ def load_model(model_path: str) -> torch.nn.Module:
         from train_A import ModelWrapper, GCNII, APPNP, GATv2Conv, SGConv
         sys.modules["__main__"].ModelWrapper = ModelWrapper 
         sys.modules["__main__"].GCNII = GCNII
-        sys.modules["__main__"].APPNP = APPNP
-        sys.modules["__main__"].GATv2Conv = GATv2Conv
-        sys.modules["__main__"].SGConv = SGConv
     model = torch.load(model_path, weights_only=False, map_location="cpu")
     model.eval()
     return model
