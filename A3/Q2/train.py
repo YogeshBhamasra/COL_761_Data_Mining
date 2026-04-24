@@ -10,6 +10,8 @@ if __name__ == "__main__":
     argparser.add_argument("--data_dir",   required=True, help="Absolute path to the shared datasets directory")
     argparser.add_argument("--model_dir", required=False, default=None, help="Directory to save the trained model.")
     argparser.add_argument("--kerberos",   required=True, help="Your Kerberos ID (used to name the output file)")
+    argparser.add_argument("--resume",     action="store_true", help="Whether to resume training from a checkpoint")
+    argparser.add_argument("--checkpoint_path", default=None, help="Path to checkpoint file to resume from (required if --resume is set)")
     args = argparser.parse_args()
     if not os.path.isabs(args.data_dir):
         argparser.error("--data_dir must be an absolute path")
@@ -17,6 +19,6 @@ if __name__ == "__main__":
     if args.dataset == "A":
         train_A.train(args.data_dir, args.model_dir, args.kerberos)
     elif args.dataset == "B":
-        train_B.train(args.data_dir, args.model_dir, args.kerberos)
+        train_B.train(args.data_dir, args.model_dir, args.kerberos, resume=args.resume, checkpoint_path=args.checkpoint_path)
     else:
         raise NotImplementedError(f"Training not implemented for dataset {args.dataset}")
