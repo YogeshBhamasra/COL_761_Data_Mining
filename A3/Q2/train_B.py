@@ -1,6 +1,9 @@
+import os
+
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import SAGEConv
+from torch_geometric.loader import NeighborLoader
 from sklearn.metrics import roc_auc_score
 from load_dataset import load_dataset
 
@@ -36,7 +39,26 @@ def train(data_dir, model_dir, kerberos,
     print(f"Using device: {device}")
 
     dataset = load_dataset("B", data_dir)
-    data = dataset[0].to(device)
+    data = dataset[0]
+
+    train_idx = data.labeled_nodes[data.train_mask]
+    val_idx   = data.labeled_nodes[data.val_mask]
+
+    train_loader = NeighborLoader(
+        data,
+        input_nodes=train_idx,
+        num_neighbors=[15, 10],
+        batch_size=1024,
+        shuffle=True,
+    )
+
+    val_loader = NeighborLoader(
+        data,
+        input_nodes=val_idx,
+        num_neighbors=[15, 10],
+        batch_size=1024,
+        shuffle=False,
+    )
 
     print(f"Dataset loaded with {data.num_nodes} nodes, {data.num_edges} edges, and {dataset.num_node_features} features.")
     model = SAGE(dataset.num_node_features, hidden_channels).to(device)
@@ -56,37 +78,45 @@ def train(data_dir, model_dir, kerberos,
 
     for epoch in range(start_epoch, epochs):
         model.train()
-        optimizer.zero_grad()
-        out = model(data.x, data.edge_index)
-        labeled_out = out[data.labeled_nodes]
-        labeled_y = data.y.float()
+        total_loss = 0
+        for batch in train_loader:
+            batch = batch.to(device)
+            optimizer.zero_grad()
+            labeled_out = model(batch.x, batch.edge_index)[:batch.batch_size]  # Only consider the output for the target node
+            labeled_y = batch.y[:batch.batch_size].float()
 
-        loss = F.binary_cross_entropy_with_logits(labeled_out[data.train_mask], labeled_y[data.train_mask])
-        loss.backward()
-        optimizer.step()
+            loss = F.binary_cross_entropy_with_logits(labeled_out, labeled_y)
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
 
         model.eval()
+        all_preds, all_labels = [], []
         with torch.no_grad():
-            val_out = out[data.labeled_nodes][data.val_mask]
-            val_labels = labeled_y[data.val_mask]
+            for batch in val_loader:
+                batch = batch.to(device)
+                out = model(batch.x, batch.edge_index)[:batch.batch_size]
+                all_preds.append(out.cpu())
+                all_labels.append(batch.y[:batch.batch_size].cpu())
+        
+        all_preds = torch.cat(all_preds)
+        all_labels = torch.cat(all_labels)
+        auc = roc_auc_score(all_labels.numpy(), all_preds.numpy())
 
-            auc = roc_auc_score(val_labels.cpu(), val_out.cpu())
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'auc': auc,
-            }, f"{model_dir}/checkpoint_epoch_{epoch}.pt")
-            if epoch % 10 == 0:
-                print(f"Epoch {epoch}, Loss: {loss.item():.4f}, Val AUC: {auc:.4f}")
-            if auc > best_auc:
-                best_auc = auc
-                torch.save(model, f"{model_dir}/best_model.pt")
-                p_counter = 0
-                print(f"New best model saved at epoch {epoch} with AUC: {auc:.4f}")
-            else:
-                p_counter += 1
-                if p_counter >= patience:
-                    print(f"Early stopping at epoch {epoch}")
-                    break
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss:.4f}, Val AUC: {auc:.4f}")
+
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+        }, os.path.join(model_dir, f"{kerberos}_B_checkpoint.pt"))
+        
+        if auc > best_auc:
+            best_auc = auc
+            p_counter = 0
+            torch.save(model, os.path.join(model_dir, f"{kerberos}_B.pt"))
+            print(f"New best model saved with AUC: {best_auc:.4f}")
+        else:
+            p_counter += 1
     print(f"Best validation AUC: {best_auc:.4f}")
