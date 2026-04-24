@@ -12,17 +12,19 @@ from torch_geometric.data import Data
 torch.serialization.add_safe_globals([Data])
 
 class SAGE(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels):
+    def __init__(self, in_channels, hidden_channels, num_layers=12):
         super().__init__()
-        self.conv1 = SAGEConv(in_channels, hidden_channels)
-        self.conv2 = SAGEConv(hidden_channels, hidden_channels)
+        self.convlist = torch.nn.ModuleList()
+        self.convlist.append(SAGEConv(in_channels, hidden_channels))
+        for _ in range(num_layers - 2):
+            self.convlist.append(SAGEConv(hidden_channels, hidden_channels))
+        self.convlist.append(SAGEConv(hidden_channels, hidden_channels))
         self.fc = torch.nn.Linear(hidden_channels, 1)
 
     def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index)
-        x = F.relu(x)
-        x = self.conv2(x, edge_index)
-        x = F.relu(x)
+        for conv in self.convlist:
+            x = conv(x, edge_index)
+            x = F.relu(x)
         x = self.fc(x)
         return x.view(-1)
 
@@ -108,14 +110,15 @@ def train(data_dir, model_dir, kerberos,
         all_labels = torch.cat(all_labels)
         auc = roc_auc_score(all_labels.numpy(), all_preds.numpy())
 
-        print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss:.4f}, Val AUC: {auc:.4f}")
+        if epoch % 10 == 0 or epoch == epochs - 1:
+            print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss:.4f}, Val AUC: {auc:.4f}")
 
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
         }, os.path.join(model_dir, f"{kerberos}_B_checkpoint.pt"))
-        
+
         if auc > best_auc:
             best_auc = auc
             p_counter = 0
@@ -123,4 +126,8 @@ def train(data_dir, model_dir, kerberos,
             print(f"New best model saved with AUC: {best_auc:.4f}")
         else:
             p_counter += 1
+        
+        if p_counter >= patience:
+            print(f"Early stopping at epoch {epoch+1} with best AUC: {best_auc:.4f}")
+            break
     print(f"Best validation AUC: {best_auc:.4f}")
