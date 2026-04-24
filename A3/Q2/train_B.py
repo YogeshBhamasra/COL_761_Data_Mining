@@ -32,9 +32,13 @@ def train(data_dir, model_dir, kerberos,
         device = torch.device('mps')
     else:        
         device = torch.device('cpu')
+    
+    print(f"Using device: {device}")
+
     dataset = load_dataset(data_dir, kerberos)
     data = dataset[0].to(device)
 
+    print(f"Dataset loaded with {dataset.num_nodes} nodes, {dataset.num_edges} edges, and {dataset.num_node_features} features.")
     model = SAGE(dataset.num_node_features, hidden_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -70,10 +74,13 @@ def train(data_dir, model_dir, kerberos,
                 'optimizer_state_dict': optimizer.state_dict(),
                 'auc': auc,
             }, f"{model_dir}/checkpoint_epoch_{epoch}.pt")
+            if epoch % 10 == 0:
+                print(f"Epoch {epoch}, Loss: {loss.item():.4f}, Val AUC: {auc:.4f}")
             if auc > best_auc:
                 best_auc = auc
                 torch.save(model, f"{model_dir}/best_model.pt")
                 p_counter = 0
+                print(f"New best model saved at epoch {epoch} with AUC: {auc:.4f}")
             else:
                 p_counter += 1
                 if p_counter >= patience:
