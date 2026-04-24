@@ -7,6 +7,10 @@ from torch_geometric.loader import NeighborLoader
 from sklearn.metrics import roc_auc_score
 from load_dataset import load_dataset
 
+from torch_geometric.data import Data
+
+torch.serialization.add_safe_globals([Data])
+
 class SAGE(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels):
         super().__init__()

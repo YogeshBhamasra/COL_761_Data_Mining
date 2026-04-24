@@ -16,7 +16,7 @@ if __name__ == "__main__":
     
     if args.dataset == "A":
         train_A.train(args.data_dir, args.model_dir, args.kerberos)
-    if args.dataset == "B":
+    elif args.dataset == "B":
         train_B.train(args.data_dir, args.model_dir, args.kerberos)
     else:
         raise NotImplementedError(f"Training not implemented for dataset {args.dataset}")
