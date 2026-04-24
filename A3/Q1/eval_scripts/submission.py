@@ -3,7 +3,7 @@ import faiss
 
 def solve(base_vectors, query_vectors, k, K, time_budget):
     
-    # Convert to float32 (Faiss expects float32)
+    # Convert to float32
     base = base_vectors.astype('float32')
     queries = query_vectors.astype('float32')
     N, d = base.shape
@@ -18,14 +18,15 @@ def solve(base_vectors, query_vectors, k, K, time_budget):
         print(f"Using {n_threads} CPU threads. GPUs available: {ngpus}")
         if ngpus > 0: is_gpu = True
     except AttributeError:
-        n_threads = 1  # fallback if not available
+        print("Using default single thread.")
+        n_threads = 1
     
-    # Choose index based on size: use HNSW if memory permits (fast, high recall)
-    # otherwise IVF-PQ to save memory. For simplicity, we use HNSW for N < 2B, which should be fine for 16GB RAM with float32 vectors
+    # Use faiss-gpu for optimal results
     if is_gpu:
         index = faiss.IndexFlatL2(d)
         index = faiss.index_cpu_to_all_gpus(index)
     else:
+        # Choose index based on size
         if N <= 2_000_000_000:
             # HNSW configuration
             M = 32 # neighbors per node
@@ -52,15 +53,13 @@ def solve(base_vectors, query_vectors, k, K, time_budget):
     # Process all queries in one batch
     D, I = index.search(queries, k)  # I: (Q,k) array of neighbor indices
     
-    # Aggregate frequencies of base indices
-    flat_neighbors = I.reshape(-1)
-    freq = np.bincount(flat_neighbors, minlength=N)
+    # Aggregate frequencies
+    freq = np.bincount(I.reshape(-1), minlength=N)
     
-    # Select top-K indices by frequency (ties by smaller index automatically)
+    # Select top-K indices
     if K < N:
-        # argpartition for efficiency
+        # argpartition for efficiency and sort top-K
         topk_idx = np.argpartition(-freq, K)[:K]
-        # Sort these top-K by (freq desc, idx asc)
         topk_idx = topk_idx[np.argsort((-freq[topk_idx], topk_idx), kind='stable')]
     else:
         # If K >= N, just sort all
