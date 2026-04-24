@@ -17,7 +17,7 @@ class SAGE(torch.nn.Module):
         x = self.conv2(x, edge_index)
         x = F.relu(x)
         x = self.fc(x)
-        return x.squeeze(1)
+        return x.view(-1)
 
 def train(data_dir, model_dir, kerberos,
           hidden_channels=64, 
@@ -35,10 +35,10 @@ def train(data_dir, model_dir, kerberos,
     
     print(f"Using device: {device}")
 
-    dataset = load_dataset(data_dir, kerberos)
+    dataset = load_dataset("B", data_dir)
     data = dataset[0].to(device)
 
-    print(f"Dataset loaded with {dataset.num_nodes} nodes, {dataset.num_edges} edges, and {dataset.num_node_features} features.")
+    print(f"Dataset loaded with {data.num_nodes} nodes, {data.num_edges} edges, and {dataset.num_node_features} features.")
     model = SAGE(dataset.num_node_features, hidden_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -58,16 +58,19 @@ def train(data_dir, model_dir, kerberos,
         model.train()
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
-        loss = F.binary_cross_entropy_with_logits(out[data.train_mask], data.y[data.train_mask].float())
+        labeled_out = out[data.labeled_nodes]
+        labeled_y = data.y.float()
+
+        loss = F.binary_cross_entropy_with_logits(labeled_out[data.train_mask], labeled_y[data.train_mask])
         loss.backward()
         optimizer.step()
 
         model.eval()
         with torch.no_grad():
-            val_out = model(data.x, data.edge_index)
-            val_probs = torch.sigmoid(val_out[data.val_mask])
-            val_labels = data.y[data.val_mask]
-            auc = roc_auc_score(val_labels.cpu(), val_probs.cpu())
+            val_out = out[data.labeled_nodes][data.val_mask]
+            val_labels = labeled_y[data.val_mask]
+
+            auc = roc_auc_score(val_labels.cpu(), val_out.cpu())
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
