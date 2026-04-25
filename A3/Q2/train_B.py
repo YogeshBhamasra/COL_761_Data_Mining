@@ -13,7 +13,10 @@ from torchvision.ops import sigmoid_focal_loss
 
 from torch_geometric.data import Data
 
-torch.serialization.add_safe_globals([Data])
+try:
+    torch.serialization.add_safe_globals([Data])
+except Exception as e:
+    print(f"Warning: Could not add Data to safe globals for torch serialization: {e}")
 
 import os
 import time
@@ -63,7 +66,7 @@ def train(data_dir, model_dir, kerberos,
           lr=1e-5, 
           weight_decay=5e-4, 
           epochs=100,
-          batch_size=2048,
+          batch_size=1024,
           num_layers=3,
           resume=False,
           checkpoint_path=None):

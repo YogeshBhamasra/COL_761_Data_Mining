@@ -22,6 +22,11 @@ from torch_geometric.utils import dropout_edge
 
 from load_dataset import load_dataset
 
+try:
+    torch.serialization.add_safe_globals([Data])
+except Exception as e:
+    print(f"Warning: Could not add Data to safe globals for torch serialization: {e}")
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GCNII  (best for deep transductive classification)

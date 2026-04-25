@@ -16,7 +16,10 @@ import time
 
 from torch_geometric.data import Data
 
-# torch.serialization.add_safe_globals([Data])
+try:
+    torch.serialization.add_safe_globals([Data])
+except Exception as e:
+    print(f"Warning: Could not add Data to safe globals for torch serialization: {e}")
 
 class LinkPredictor(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, dropout=0.3, num_layers=3):
