@@ -1,5 +1,6 @@
 import train_B
 import train_A
+import train_C
 import argparse
 import os
 
@@ -20,5 +21,7 @@ if __name__ == "__main__":
         train_A.train(args.data_dir, args.model_dir, args.kerberos)
     elif args.dataset == "B":
         train_B.train(args.data_dir, args.model_dir, args.kerberos, resume=args.resume, checkpoint_path=args.checkpoint_path)
+    elif args.dataset == "C":
+        train_C.train(args.data_dir, args.model_dir, args.kerberos, resume=args.resume, checkpoint_path=args.checkpoint_path)
     else:
         raise NotImplementedError(f"Training not implemented for dataset {args.dataset}")
