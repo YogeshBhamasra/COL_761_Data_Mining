@@ -48,18 +48,19 @@ class SAGE(torch.nn.Module):
         x = self.fc(x)
         return x
 
+    @torch.no_grad()
     def inference(self, loader, device):
         all_preds = []
         for batch in loader:
             batch = batch.to(device)
             with torch.no_grad():
                 out = self.forward(batch.x, batch.edge_index)[:batch.batch_size].squeeze(1)
-            all_preds.append(out.cpu())
-        return torch.cat(all_preds, dim=0)
+            all_preds.append(out)
+        return torch.cat(all_preds, dim=0).cpu()
 
 def train(data_dir, model_dir, kerberos,
-          hidden_channels=128, 
-          lr=0.003, 
+          hidden_channels=256, 
+          lr=1e-5, 
           weight_decay=5e-4, 
           epochs=100,
           batch_size=2048,
@@ -87,7 +88,8 @@ def train(data_dir, model_dir, kerberos,
     train_nodes = data.labeled_nodes[data.train_mask]
     val_nodes   = data.labeled_nodes[data.val_mask]
 
-    num_workers = max(8, num_cpus // 2)
+    # num_workers = max(8, num_cpus // 2)
+    num_workers = 8
 
     train_loader = NeighborLoader(
         data,
@@ -174,15 +176,25 @@ def train(data_dir, model_dir, kerberos,
         scheduler.step()
         loss_avg = total_loss / total_examples
 
-        model.eval()
-        val_pred = model.inference(val_loader, device)
-        val_labels = data.y[val_nodes].cpu()
-        auc = roc_auc_score(val_labels.numpy(), val_pred.numpy())
-
-        if epoch % 1 == 0 or epoch == epochs - 1:
+        if epoch % 10 == 0 or epoch == epochs - 1:
             end_time = time.time()
             elapsed = end_time - t_start
+            val_pred = model.inference(val_loader, device)
+            val_labels = data.y[val_nodes].cpu()
+            auc = roc_auc_score(val_labels.numpy(), val_pred.numpy())
             print(f"Epoch {epoch+1}/{epochs}, Avg Loss: {loss_avg:.4f}, Val AUC: {auc:.4f}, Time Elapsed: {elapsed:.2f}s")
+            model.eval()
+            if auc > best_auc:
+                best_auc = auc
+                p_counter = 0
+                torch.save(model, os.path.join(model_dir, f"{kerberos}_model_B.pt"))
+                print(f"New best model at epoch {epoch+1} saved with AUC: {best_auc:.4f}")
+            else:
+                p_counter += 1
+            
+            if p_counter >= patience:
+                print(f"Early stopping at epoch {epoch+1} with best AUC: {best_auc:.4f}")
+                break
 
         torch.save({
             'epoch': epoch,
@@ -193,15 +205,4 @@ def train(data_dir, model_dir, kerberos,
             'p_counter': p_counter,
         }, os.path.join(model_dir, f"{kerberos}_model_B_checkpoint.pt"))
 
-        if auc > best_auc:
-            best_auc = auc
-            p_counter = 0
-            torch.save(model, os.path.join(model_dir, f"{kerberos}_model_B.pt"))
-            print(f"New best model at epoch {epoch+1} saved with AUC: {best_auc:.4f}")
-        else:
-            p_counter += 1
-        
-        if p_counter >= patience:
-            print(f"Early stopping at epoch {epoch+1} with best AUC: {best_auc:.4f}")
-            break
     print(f"Best validation AUC: {best_auc:.4f}")
