@@ -9,7 +9,7 @@ if __name__ == "__main__":
     argparser.add_argument("--dataset",    required=True, choices=["A", "B", "C"])
     argparser.add_argument("--task",       required=True, choices=["node", "link"], help="Task type: node classification (A/B) or link prediction (C)")
     argparser.add_argument("--data_dir",   required=True, help="Absolute path to the shared datasets directory")
-    argparser.add_argument("--model_dir", required=False, default=None, help="Directory to save the trained model.")
+    argparser.add_argument("--model_dir", required=True, default=None, help="Directory to save the trained model.")
     argparser.add_argument("--kerberos",   required=True, help="Your Kerberos ID (used to name the output file)")
     argparser.add_argument("--resume",     action="store_true", help="Whether to resume training from a checkpoint")
     argparser.add_argument("--checkpoint_path", default=None, help="Path to checkpoint file to resume from (required if --resume is set)")
