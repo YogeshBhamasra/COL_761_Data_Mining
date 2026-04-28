@@ -32,7 +32,7 @@ def load_model(model_path: str) -> torch.nn.Module:
     print(f"Loading model from {os.path.splitext(os.path.basename(model_path))[0]} ...")
     basename = os.path.splitext(os.path.basename(model_path))[0]
     if basename.endswith("_A"):
-        from train_A import ModelWrapper, GCNII, APPNP, GATv2Conv, SGConv
+        from train_A import ModelWrapper, GCNII
         sys.modules["__main__"].ModelWrapper = ModelWrapper 
         sys.modules["__main__"].GCNII = GCNII
     model = torch.load(model_path, weights_only=False, map_location="cpu")
