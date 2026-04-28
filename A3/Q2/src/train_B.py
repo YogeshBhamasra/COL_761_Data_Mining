@@ -81,7 +81,7 @@ def train(data_dir, model_dir, kerberos,
 
     dataset = load_dataset("B", data_dir)
     data = dataset[0]
-
+    os.makedirs(model_dir, exist_ok=True)
     print(f"    Dataset loaded with {data.num_nodes} nodes, {data.num_edges} edges, and {dataset.num_node_features} features.")
 
     y_full = torch.full((data.num_nodes,), float('nan'))

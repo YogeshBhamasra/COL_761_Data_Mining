@@ -84,6 +84,7 @@ def train(data_dir, model_dir, kerberos,
     else:
         device = torch.device("cpu")
 
+    os.makedirs(model_dir, exist_ok=True)
     data = load_dataset("C", data_dir)
     x = data.x.to(device)
     edge_index = data.edge_index.to(device)
